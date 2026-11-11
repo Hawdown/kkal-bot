@@ -7,11 +7,6 @@ PROXYAPI_KEY = "sk-Puf1u6JeY80t1KGui9kCXew7V35OVqkM"
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-client = OpenAI(
-    api_key=PROXYAPI_KEY,
-    base_url="https://proxyapi.ru",
-)
-
 PROMPT = (
     "Определи все блюда и продукты на фото, оцени их примерный вес в граммах. "
     "Рассчитай калории, белки, жиры и углеводы (КБЖУ) для каждого продукта и итоговую сумму. "
@@ -19,18 +14,52 @@ PROMPT = (
 )
 
 
+def ask_vision_model(base64_image, user_caption):
+  # Пробуем по очереди оба рабочих шлюза ProxyAPI
+  configs = [
+      ("https://proxyapi.ru", "openai/gpt-4.1-mini"),
+      ("https://proxyapi.ru", "gpt-4.1-mini"),
+      ("https://proxyapi.ru", "gpt-4o-mini"),
+  ]
+  last_error = None
+  for url, model_name in configs:
+    try:
+      client = OpenAI(api_key=PROXYAPI_KEY, base_url=url)
+      response = client.chat.completions.create(
+          model=model_name,
+          messages=[{
+              "role": "user",
+              "content": [
+                  {"type": "text", "text": PROMPT + user_caption},
+                  {
+                      "type": "image_url",
+                      "image_url": {
+                          "url": f"data:image/jpeg;base64,{base64_image}"
+                      },
+                  },
+              ],
+          }],
+          max_tokens=500,
+      )
+      first_choice = next(iter(response.choices))
+      return first_choice.message.content
+    except Exception as e:
+      last_error = f"[{url} | {model_name}]: {e}"
+  raise Exception(last_error)
+
+
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
   bot.reply_to(
       message,
-      "Привет! Отправь мне фото еды, и я посчитаю её КБЖУ. Можешь добавить"
-      " подпись к фото с точным весом.",
+      "Привет! Отправь мне фото еды (в личку или в группу), и я посчитаю её"
+      " КБЖУ.",
   )
 
 
 @bot.message_handler(content_types=["photo"])
 def handle_photo(message):
-  msg = bot.reply_to(message, "Считаю КБЖУ по фото...")
+  msg = bot.reply_to(message, "Считаю КБЖУ по фото (v3)...")
 
   try:
     photo = message.photo.pop()
@@ -43,33 +72,15 @@ def handle_photo(message):
         if message.caption
         else ""
     )
-
-    response = client.chat.completions.create(
-        model="openai/gpt-4.1-mini",
-        messages=[{
-            "role": "user",
-            "content": [
-                {"type": "text", "text": PROMPT + user_caption},
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{base64_image}"
-                    },
-                },
-            ],
-        }],
-        max_tokens=500,
-    )
-
-    first_choice = next(iter(response.choices))
-    result_text = first_choice.message.content
+    result_text = ask_vision_model(base64_image, user_caption)
 
     bot.delete_message(chat_id=message.chat.id, message_id=msg.message_id)
     bot.reply_to(message, result_text)
 
   except Exception as e:
-    bot.reply_to(message, f"Ошибка при анализе: {e}")
+    bot.reply_to(message, f"Ошибка: {e}")
 
 
 print("Бот запущен!")
 bot.polling(none_stop=True)
+
