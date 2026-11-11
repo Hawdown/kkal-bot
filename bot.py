@@ -73,5 +73,3 @@ def handle_photo(message):
 
 print("Бот запущен!")
 bot.polling(none_stop=True)
-
-
