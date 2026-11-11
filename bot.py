@@ -45,7 +45,7 @@ def handle_photo(message):
     )
 
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model = "openai/gpt-4.1-mini",
         messages=[{
             "role": "user",
             "content": [
