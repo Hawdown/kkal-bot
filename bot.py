@@ -14,9 +14,9 @@ client = OpenAI(
 )
 
 PROMPT = (
-    "Определи все блюда и продукты на фото, оцени их примерный вес в граммах. "
-    "Рассчитай калории, белки, жиры и углеводы (КБЖУ) для каждого продукта и итоговую сумму. "
-    "Отвечай кратко, по делу и списком."
+    "Определи все блюда и продукты на фото, оцени их примерный вес в"
+    " граммах. Рассчитай калории, белки, жиры и углеводы (КБЖУ) для каждого"
+    " продукта и итоговую сумму. Отвечай кратко, по делу и списком."
 )
 
 
@@ -68,17 +68,14 @@ def handle_photo(message):
     first_choice = next(iter(response.choices))
     result_text = first_choice.message.content
 
-    bot.edit_message_text(
-        result_text, chat_id=message.chat.id, message_id=msg.message_id
-    )
+    bot.delete_message(chat_id=message.chat.id, message_id=msg.message_id)
+    bot.reply_to(message, result_text)
+
   except Exception as e:
-    bot.edit_message_text(
-        f"Ошибка при анализе: {e}",
-        chat_id=message.chat.id,
-        message_id=msg.message_id,
-    )
+    bot.reply_to(message, f"Ошибка ({client.base_url}): {e}")
 
 
 print("Бот запущен!")
 bot.polling(none_stop=True)
+
 
