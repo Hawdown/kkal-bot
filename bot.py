@@ -4,17 +4,14 @@ import telebot
 
 BOT_TOKEN = "9097879444:AAEZJfhBjscvL3CxSfgDHdJTm_xv5J_r7Oc"
 PROXYAPI_KEY = "sk-Puf1u6JeY80t1KGui9kCXew7V35OVqkM"
-
-# ID ветки «Питание» из твоей ссылки
 ALLOWED_TOPIC_ID = 3
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
 client = OpenAI(
     api_key=PROXYAPI_KEY,
-    base_url = "https://proxyapi.ru",
+    base_url="https://proxyapi.ru",
 )
-
 
 PROMPT = (
     "Определи все блюда и продукты на фото, оцени их примерный вес в граммах. "
@@ -33,7 +30,6 @@ def send_welcome(message):
 
 @bot.message_handler(content_types=["photo"])
 def handle_photo(message):
-  # В группах реагируем только на сообщения из ветки «Питание» (ID = 3)
   if message.chat.type in ["group", "supergroup"]:
     if message.message_thread_id != ALLOWED_TOPIC_ID:
       return
