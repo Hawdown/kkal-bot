@@ -10,7 +10,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 client = OpenAI(
     api_key=PROXYAPI_KEY,
-    base_url = "https://api.proxyapi.ru/v1",
+    base_url="https://api.proxyapi.ru/v1",
 )
 
 PROMPT = (
