@@ -4,19 +4,18 @@ import telebot
 
 BOT_TOKEN = "9097879444:AAEZJfhBjscvL3CxSfgDHdJTm_xv5J_r7Oc"
 PROXYAPI_KEY = "sk-Puf1u6JeY80t1KGui9kCXew7V35OVqkM"
-ALLOWED_TOPIC_ID = 3
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
 client = OpenAI(
     api_key=PROXYAPI_KEY,
-    base_url="https://api.proxyapi.ru/v1",
+    base_url="https://proxyapi.ru",
 )
 
 PROMPT = (
-    "Определи все блюда и продукты на фото, оцени их примерный вес в"
-    " граммах. Рассчитай калории, белки, жиры и углеводы (КБЖУ) для каждого"
-    " продукта и итоговую сумму. Отвечай кратко, по делу и списком."
+    "Определи все блюда и продукты на фото, оцени их примерный вес в граммах. "
+    "Рассчитай калории, белки, жиры и углеводы (КБЖУ) для каждого продукта и итоговую сумму. "
+    "Отвечай кратко, по делу и списком."
 )
 
 
@@ -24,16 +23,13 @@ PROMPT = (
 def send_welcome(message):
   bot.reply_to(
       message,
-      "Привет! Отправь мне фото еды в ветку «Питание», и я посчитаю её КБЖУ.",
+      "Привет! Отправь мне фото еды, и я посчитаю её КБЖУ. Можешь добавить"
+      " подпись к фото с точным весом.",
   )
 
 
 @bot.message_handler(content_types=["photo"])
 def handle_photo(message):
-  if message.chat.type in ["group", "supergroup"]:
-    if message.message_thread_id != ALLOWED_TOPIC_ID:
-      return
-
   msg = bot.reply_to(message, "Считаю КБЖУ по фото...")
 
   try:
@@ -72,7 +68,7 @@ def handle_photo(message):
     bot.reply_to(message, result_text)
 
   except Exception as e:
-    bot.reply_to(message, f"Ошибка ({client.base_url}): {e}")
+    bot.reply_to(message, f"Ошибка при анализе: {e}")
 
 
 print("Бот запущен!")
