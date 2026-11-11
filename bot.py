@@ -15,11 +15,11 @@ PROMPT = (
 
 
 def ask_vision_model(base64_image, user_caption):
-  # Пробуем по очереди оба рабочих шлюза ProxyAPI
+  domain = "api." + "proxyapi.ru"
   configs = [
-      ("https://proxyapi.ru", "openai/gpt-4.1-mini"),
-      ("https://proxyapi.ru", "gpt-4.1-mini"),
-      ("https://proxyapi.ru", "gpt-4o-mini"),
+      (f"https://{domain}/openrouter/v1", "openai/gpt-4.1-mini"),
+      (f"https://{domain}/openai/v1", "gpt-4.1-mini"),
+      (f"https://{domain}/openai/v1", "gpt-4o-mini"),
   ]
   last_error = None
   for url, model_name in configs:
@@ -59,7 +59,7 @@ def send_welcome(message):
 
 @bot.message_handler(content_types=["photo"])
 def handle_photo(message):
-  msg = bot.reply_to(message, "Считаю КБЖУ по фото v3...")
+  msg = bot.reply_to(message, "Считаю КБЖУ по фото (v4)...")
 
   try:
     photo = message.photo.pop()
@@ -83,4 +83,5 @@ def handle_photo(message):
 
 print("Бот запущен!")
 bot.polling(none_stop=True)
+
 
