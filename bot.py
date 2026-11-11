@@ -53,13 +53,13 @@ def send_welcome(message):
   bot.reply_to(
       message,
       "Привет! Отправь мне фото еды (в личку или в группу), и я посчитаю её"
-      " КБЖУ.v3",
+      " КБЖУ.",
   )
 
 
 @bot.message_handler(content_types=["photo"])
 def handle_photo(message):
-  msg = bot.reply_to(message, "Считаю КБЖУ по фото (v3)...")
+  msg = bot.reply_to(message, "Считаю КБЖУ по фото v3...")
 
   try:
     photo = message.photo.pop()
