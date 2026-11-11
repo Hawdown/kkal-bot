@@ -5,12 +5,14 @@ import telebot
 BOT_TOKEN = "9097879444:AAEZJfhBjscvL3CxSfgDHdJTm_xv5J_r7Oc"
 PROXYAPI_KEY = "sk-Puf1u6JeY80t1KGui9kCXew7V35OVqkM"
 
+# ID ветки «Питание» из твоей ссылки
+ALLOWED_TOPIC_ID = 3
+
 bot = telebot.TeleBot(BOT_TOKEN)
 
 client = OpenAI(
     api_key=PROXYAPI_KEY,
-    base_url = "https://proxyapi.ru",
-
+    base_url="https://proxyapi.ru",
 )
 
 PROMPT = (
@@ -24,28 +26,33 @@ PROMPT = (
 def send_welcome(message):
   bot.reply_to(
       message,
-      "Привет! Отправь мне фото еды, и я посчитаю её КБЖУ. Можешь добавить"
-      " подпись к фото с точным весом.",
+      "Привет! Отправь мне фото еды в ветку «Питание», и я посчитаю её КБЖУ.",
   )
 
 
 @bot.message_handler(content_types=["photo"])
 def handle_photo(message):
+  # В группах реагируем только на сообщения из ветки «Питание» (ID = 3)
+  if message.chat.type in ["group", "supergroup"]:
+    if message.message_thread_id != ALLOWED_TOPIC_ID:
+      return
+
   msg = bot.reply_to(message, "Считаю КБЖУ по фото...")
 
   try:
-    file_info = bot.get_file(message.photo[-1].file_id)
+    photo = message.photo.pop()
+    file_info = bot.get_file(photo.file_id)
     downloaded_file = bot.download_file(file_info.file_path)
     base64_image = base64.b64encode(downloaded_file).decode("utf-8")
 
     user_caption = (
-        f"\Уточнение от пользователя: {message.caption}"
+        f"\nУточнение от пользователя: {message.caption}"
         if message.caption
         else ""
     )
 
     response = client.chat.completions.create(
-        model = "openai/gpt-4.1-mini",
+        model="openai/gpt-4.1-mini",
         messages=[{
             "role": "user",
             "content": [
@@ -61,7 +68,9 @@ def handle_photo(message):
         max_tokens=500,
     )
 
-    result_text = response.choices[0].message.content
+    first_choice = next(iter(response.choices))
+    result_text = first_choice.message.content
+
     bot.edit_message_text(
         result_text, chat_id=message.chat.id, message_id=msg.message_id
     )
